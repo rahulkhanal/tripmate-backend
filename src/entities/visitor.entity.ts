@@ -13,7 +13,7 @@ export class VisitorEntity {
     @Column({ nullable: true })
     photo: string;
 
-    @Column()
+    @Column({unique: true})
     email: string;
 
     @Column()

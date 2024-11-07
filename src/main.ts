@@ -31,5 +31,5 @@ async function bootstrap() {
   await app.listen(3000);
 }
 bootstrap().then(() => {
-  console.log('Server is running on port http://localhost:3000/api');
+  console.log('Server is running on port http://localhost:3000');
 });

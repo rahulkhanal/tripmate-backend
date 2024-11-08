@@ -1,34 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, Req, UseGuards } from '@nestjs/common';
 import { VisitService } from './visit.service';
 import { CreateVisitDto } from './dto/create-visit.dto';
 import { UpdateVisitDto } from './dto/update-visit.dto';
+import { VisitEntity } from 'src/entities/visit.entity';
+import { Roles } from 'src/middleware/roles.decorator';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/middleware/roles.guard';
+import { AtGuard } from 'src/middleware/at.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('visit')
 export class VisitController {
-  constructor(private readonly visitService: VisitService) {}
+  constructor(private readonly visitService: VisitService) { }
 
-  @Post()
-  create(@Body() createVisitDto: CreateVisitDto) {
-    return this.visitService.create(createVisitDto);
+  @Post('book/:propertyId')
+  @Roles('visitor')
+  @UseGuards(AtGuard, RolesGuard)
+  @ApiBearerAuth('access_token')
+  async bookTour(
+    @Param('propertyId', ParseIntPipe) propertyId: number,
+    @Req() req,
+  ) {
+    const { user } = req;
+    console.log(user);
+    // return this.visitService.bookTour(visitorId, propertyId);
   }
 
-  @Get()
-  findAll() {
-    return this.visitService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.visitService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVisitDto: UpdateVisitDto) {
-    return this.visitService.update(+id, updateVisitDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.visitService.remove(+id);
-  }
 }

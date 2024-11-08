@@ -5,13 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SuperAdmin } from 'src/entities/super_admin.entity';
 import { VisitorEntity } from 'src/entities/visitor.entity';
 import { JwtService } from '@nestjs/jwt';
+import { AtStrategy } from 'src/middleware/at.strategy';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SuperAdmin, VisitorEntity]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtService],
+  providers: [AuthService, JwtService, AtStrategy],
 
 })
 export class AuthModule { }

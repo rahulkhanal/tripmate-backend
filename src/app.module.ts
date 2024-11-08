@@ -6,6 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './src/auth/auth.module';
 import { PropertyModule } from './src/property/property.module';
 import { VisitModule } from './src/visit/visit.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './middleware/roles.guard';
+import { JwtService } from '@nestjs/jwt';
+import { AtStrategy } from './middleware/at.strategy';
 
 
 @Module({

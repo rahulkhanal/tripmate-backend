@@ -18,6 +18,9 @@ export class VisitEntity {
     @Column()
     visit_date: Date;
 
+    @Column({ type: 'enum', enum: ['booked', 'visited', 'cancelled'], default: 'booked' })
+    status: 'booked' | 'visited';
+
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 

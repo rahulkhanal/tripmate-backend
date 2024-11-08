@@ -1,26 +1,36 @@
 import { Injectable } from '@nestjs/common';
 import { CreateVisitDto } from './dto/create-visit.dto';
 import { UpdateVisitDto } from './dto/update-visit.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { PropertyEntity } from 'src/entities/property.entity';
+import { Repository } from 'typeorm';
+import { PropertyFeatureEntity } from 'src/entities/property_feature.entity';
+import { FeatureEntity } from 'src/entities/feature.entity';
+import { RatingEntity } from 'src/entities/rating.entity';
+import { VisitEntity } from 'src/entities/visit.entity';
+import { VisitorEntity } from 'src/entities/visitor.entity';
 
 @Injectable()
 export class VisitService {
-  create(createVisitDto: CreateVisitDto) {
-    return 'This action adds a new visit';
-  }
+  constructor(
+    @InjectRepository(PropertyEntity)
+    private readonly propertyRepository: Repository<PropertyEntity>,
 
-  findAll() {
-    return `This action returns all visit`;
-  }
+    @InjectRepository(PropertyFeatureEntity)
+    private readonly propertyFeatureRepository: Repository<PropertyFeatureEntity>,
 
-  findOne(id: number) {
-    return `This action returns a #${id} visit`;
-  }
+    @InjectRepository(FeatureEntity)
+    private readonly featureRepository: Repository<FeatureEntity>,
 
-  update(id: number, updateVisitDto: UpdateVisitDto) {
-    return `This action updates a #${id} visit`;
-  }
+    @InjectRepository(RatingEntity)
+    private readonly ratingRepository: Repository<RatingEntity>,
 
-  remove(id: number) {
-    return `This action removes a #${id} visit`;
-  }
+    @InjectRepository(VisitEntity)
+    private readonly visitRepository: Repository<VisitEntity>,
+
+    @InjectRepository(VisitorEntity)
+    private readonly visitorRepository: Repository<VisitorEntity>,
+  ) { }
+
+  
 }

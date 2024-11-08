@@ -19,7 +19,6 @@ export class VisitEntity {
     @OneToOne(() => RatingEntity, rating => rating.visit)
     rate: RatingEntity;
 
-
     @Column()
     startDate: Date;
 

@@ -7,16 +7,16 @@ export class PropertyFeatureEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => Property, property => property.propertyFeatures)
+    @ManyToOne(() => Property, property => property.propertyFeatures,{ onDelete: 'CASCADE' })
     @JoinColumn({ name: 'property_id' })
     property: Property;
 
-    @ManyToOne(() => Feature, feature => feature.propertyFeatures)
+    @ManyToOne(() => Feature, feature => feature.propertyFeatures, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'feature_id' })
     feature: Feature;
 
     @Column()
-    status: string;
+    status: boolean;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;

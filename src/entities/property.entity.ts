@@ -36,6 +36,6 @@ export class PropertyEntity {
     @OneToMany(() => Rating, rating => rating.property)
     ratings: Rating[];
 
-    @OneToMany(() => PropertyFeature, propertyFeature => propertyFeature.property)
+    @OneToMany(() => PropertyFeature, propertyFeature => propertyFeature.property, { onDelete: 'CASCADE' })
     propertyFeatures: PropertyFeature[];
 }

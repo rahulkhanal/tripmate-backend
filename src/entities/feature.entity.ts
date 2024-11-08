@@ -16,6 +16,6 @@ export class FeatureEntity {
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
     updatedAt: Date;
 
-    @OneToMany(() => PropertyFeature, propertyFeature => propertyFeature.feature)
+    @OneToMany(() => PropertyFeature, propertyFeature => propertyFeature.feature, { onDelete: 'CASCADE' })
     propertyFeatures: PropertyFeature[];
 }

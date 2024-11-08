@@ -5,6 +5,7 @@ import databaseConfig from './config/pg.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './src/auth/auth.module';
 import { PropertyModule } from './src/property/property.module';
+import { VisitModule } from './src/visit/visit.module';
 
 
 @Module({
@@ -15,6 +16,7 @@ import { PropertyModule } from './src/property/property.module';
     TypeOrmModule.forRoot(databaseConfig),
     AuthModule,
     PropertyModule,
+    VisitModule,
   ],
   controllers: [AppController],
   providers: [],

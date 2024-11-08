@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePropertyDto } from './dto/create-property.dto';
-import { UpdatePropertyDto } from './dto/update-property.dto';
+import { UpdateFeatureStatusDto, UpdatePropertyDto } from './dto/update-property.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyEntity } from 'src/entities/property.entity';
 import { Repository } from 'typeorm';
@@ -66,5 +66,20 @@ export class PropertyService {
     const properties = await this.propertyRepository.find({ relations: ['propertyFeatures', 'propertyFeatures.feature'] });
     if (!properties) return [];
     return properties;
+  }
+
+  async updateProperty(id: number, updatePropertyDto: UpdatePropertyDto) {
+    const property = await this.propertyRepository.findOne({ where: { id } });
+    if (!property) throw new NotFoundException(`Property with ID ${id} not found`);
+    const updatedProperty = Object.assign(property, updatePropertyDto);
+    return await this.propertyRepository.save(updatedProperty);
+  }
+
+  async updateFeatureStatus(id: number, updateFeatureStatusDto: UpdateFeatureStatusDto) {
+    const propertyFeature = await this.propertyFeatureRepository.findOne({ where: { id: id } });
+    if (!propertyFeature) throw new NotFoundException(`PropertyFeature with ID ${id} not found`);
+
+    propertyFeature.status = updateFeatureStatusDto.status;
+    return await this.propertyFeatureRepository.save(propertyFeature);
   }
 }

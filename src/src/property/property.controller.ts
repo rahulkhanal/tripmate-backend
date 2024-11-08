@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
-import { UpdatePropertyDto } from './dto/update-property.dto';
-import { ApiBody, ApiOperation } from '@nestjs/swagger';
+import { UpdateFeatureStatusDto, UpdatePropertyDto } from './dto/update-property.dto';
+import { ApiBody, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { CreateFeaturesDto } from './dto/feature.dto';
 import { FeatureEntity } from 'src/entities/feature.entity';
 
@@ -33,10 +33,32 @@ export class PropertyController {
   findAll() {
     return this.propertyService.findAll();
   }
-  
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a property by ID' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.propertyService.findOne(+id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update all details of a property, excluding amenities' })
+  @ApiParam({ name: 'id', description: 'The ID of the property to update' })
+  @ApiBody({ type: UpdatePropertyDto })
+  async updateProperty(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePropertyDto: UpdatePropertyDto,
+  ) {
+    return this.propertyService.updateProperty(id, updatePropertyDto);
+  }
+
+  @Patch(':id/features')
+  @ApiOperation({ summary: 'Update the status of a feature for a property' })
+  @ApiParam({ name: 'id', description: 'The ID of the property to update' })
+  @ApiBody({ type: UpdateFeatureStatusDto })
+  async updateFeatureStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateFeatureStatusDto: UpdateFeatureStatusDto,
+  ) {
+    return this.propertyService.updateFeatureStatus(id, updateFeatureStatusDto);
   }
 }

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PropertyEntity } from 'src/entities/property.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { PropertyFeatureEntity } from 'src/entities/property_feature.entity';
 import { FeatureEntity } from 'src/entities/feature.entity';
 import { RatingEntity } from 'src/entities/rating.entity';
@@ -102,13 +102,49 @@ export class VisitService {
   async getRecommendations(visitorId: number) {
     const visitor = await this.visitorRepository.findOne({
       where: { id: visitorId },
-      relations: ['visits', 'ratings', 'visits.property'],
+      relations: ['visits', 'ratings', 'visits.property', 'ratings.property'],
     });
     if (!visitor.ratings.length) {
       return { message: "You haven't rated any tour yet. so, you can't get recommendations", data: [] };
     }
-    console.log(visitor);
-    // const visitedPropertyIds = visitor.visits.map(visit => visit.property.id);
-    // console.log(visitedPropertyIds);
+    const relevantPropertyIds = visitor.visits.map(visit => visit.property.id);
+    const visitorFeatures = await this.propertyFeatureRepository.find({
+      where: { property: { id: In(relevantPropertyIds) }, status: true },
+      relations: ['feature'],
+    });
+    // console.log(visitorFeatures);
+    const visitorFeatureIds = new Set(visitorFeatures.map(feature => feature.feature.id));
+    // console.log("visitorFeatureIds", visitorFeatureIds);
+    const allProperties = await this.propertyRepository.find({ relations: ['propertyFeatures', 'propertyFeatures.feature'] });
+    // console.log('allProperties', allProperties);
+    const recommendations = allProperties.map(property => {
+      const propertyFeatureIds = property.propertyFeatures.map(pf => pf.feature.id);
+      // console.log('propertyFeatureIds', propertyFeatureIds);
+      const similarityScore = this.calculateCosineSimilarity(visitorFeatureIds, new Set(propertyFeatureIds));
+      return { property, similarityScore };
+    });
+
+    console.log(recommendations);
+    const sortedRecommendations = recommendations
+      .filter(rec => rec.similarityScore > 0)  // Only properties with non-zero similarity
+      .sort((a, b) => b.similarityScore - a.similarityScore)  // Sort by highest score first
+      .slice(0, 5); // Limit to top 5 recommendations
+
+    const sortedItem = sortedRecommendations.map((item) => {
+      delete item.property.propertyFeatures;
+      return item;
+    });
+    return { message: 'Recommendations', data: sortedItem };
+
+
   }
+  private calculateCosineSimilarity(visitorFeatures: Set<number>, propertyFeatures: Set<number>): number {
+    // console.log('visitorFeatures', visitorFeatures);
+    // console.log(  'propertyFeatures', propertyFeatures);
+    const intersection = new Set([...visitorFeatures].filter(x => propertyFeatures.has(x)));
+    // console.log(intersection.size);
+    const cosineSimilarity = intersection.size / Math.sqrt(visitorFeatures.size * propertyFeatures.size);
+    return cosineSimilarity;
+  }
+
 }

@@ -16,7 +16,10 @@ export class VisitEntity {
     property: Property;
 
     @Column()
-    visit_date: Date;
+    startDate: Date;
+
+    @Column()
+    endDate: Date;
 
     @Column({ type: 'enum', enum: ['booked', 'visited', 'cancelled'], default: 'booked' })
     status: 'booked' | 'visited';

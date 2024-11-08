@@ -63,9 +63,17 @@ export class PropertyService {
   }
 
   async findAll() {
-    const properties = await this.propertyRepository.find({ relations: ['propertyFeatures', 'propertyFeatures.feature'] });
+    const properties = await this.propertyRepository.find({ relations: ['propertyFeatures', 'propertyFeatures.feature', 'ratings'] });
     if (!properties) return [];
-    return properties;
+    let propertyrate = 0;
+    const resp = properties.map(property => {
+      property.ratings.map(rating => {
+        propertyrate += rating.rating_score;
+        return rating;
+      });
+      return { ...property, ratings: propertyrate / property.ratings.length };
+    });
+    return resp;
   }
 
   async updateProperty(id: number, updatePropertyDto: UpdatePropertyDto) {

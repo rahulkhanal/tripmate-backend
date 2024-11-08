@@ -46,9 +46,9 @@ export class VisitController {
   }
 
   @Get('get-all-bookings')
-  // @Roles('super_admin')
-  // @UseGuards(AtGuard, RolesGuard)
-  // @ApiBearerAuth('access_token')
+  @Roles('super_admin')
+  @UseGuards(AtGuard, RolesGuard)
+  @ApiBearerAuth('access_token')
   @ApiOperation({ summary: 'Get all bookings' })
   @ApiQuery({ name: 'status', required: false, type: String, enum: bookingStatus })
   async getAllBookings(@Query('status') status: bookingStatus,
@@ -57,7 +57,7 @@ export class VisitController {
   }
 
   @Patch('update-booking')
-  @Roles('visitor')
+  @Roles('visitor', 'super_admin')
   @UseGuards(AtGuard, RolesGuard)
   @ApiBearerAuth('access_token')
   @ApiOperation({ summary: 'Update booking' })
@@ -83,9 +83,9 @@ export class VisitController {
   }
 
   @Post('send-mail')
-  // @Roles('visitor')
-  // @UseGuards(AtGuard, RolesGuard)
-  // @ApiBearerAuth('access_token')
+  @Roles('super_admin')
+  @UseGuards(AtGuard, RolesGuard)
+  @ApiBearerAuth('access_token')
   @ApiOperation({ summary: 'Send mail to property owner' })
   async sendMailToPropertyOwner(@Body() mailData: MailDto) {
     await this.visitService.sendMail(mailData);

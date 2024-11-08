@@ -124,7 +124,7 @@ export class VisitService {
       return { property, similarityScore };
     });
 
-    console.log(recommendations);
+    // console.log(recommendations);
     const sortedRecommendations = recommendations
       .filter(rec => rec.similarityScore > 0)  // Only properties with non-zero similarity
       .sort((a, b) => b.similarityScore - a.similarityScore)  // Sort by highest score first

@@ -15,4 +15,8 @@ export class RatingDto {
     @IsNumber()
     @ApiProperty()
     property: number;
+
+    @IsNumber()
+    @ApiProperty()
+    visit: number;
 }

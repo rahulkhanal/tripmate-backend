@@ -90,4 +90,14 @@ export class VisitController {
   async sendMailToPropertyOwner(@Body() mailData: MailDto) {
     await this.visitService.sendMail(mailData);
   }
+
+  @Get('recommendations')
+  @Roles('visitor')
+  @UseGuards(AtGuard, RolesGuard)
+  @ApiBearerAuth('access_token')
+  async getRecommendations(@Req() req) {
+    const { user } = req;
+    const visitorId = user.id;
+    return await this.visitService.getRecommendations(visitorId);
+  }
 }

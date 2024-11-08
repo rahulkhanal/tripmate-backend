@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { VisitorEntity } from './visitor.entity';
 import { PropertyEntity as Property } from './property.entity';
+import { VisitEntity } from './visit.entity';
 
 @Entity('ratings')
 export class RatingEntity {
@@ -10,6 +11,10 @@ export class RatingEntity {
     @ManyToOne(() => VisitorEntity, visitor => visitor.ratings)
     @JoinColumn({ name: 'visitor_id' })
     visitor: VisitorEntity;
+
+    @OneToOne(() => VisitEntity, visit => visit.rate, { onDelete: 'CASCADE', nullable: false })
+    @JoinColumn({ name: 'booking_id' })
+    visit: VisitEntity;
 
     @ManyToOne(() => Property, property => property.ratings)
     @JoinColumn({ name: 'property_id' })

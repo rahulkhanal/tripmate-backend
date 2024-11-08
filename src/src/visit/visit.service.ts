@@ -46,7 +46,7 @@ export class VisitService {
   }
 
   async getMyBookings(visitorId: number, status) {
-    const visits = await this.visitRepository.find({ where: { visitor: { id: visitorId }, status }, relations: ['property'] });
+    const visits = await this.visitRepository.find({ where: { visitor: { id: visitorId }, status }, relations: ['property', 'rate'] });
     if (!visits) return [];
     return visits;
   }
@@ -65,13 +65,13 @@ export class VisitService {
   }
 
   async rateTour(visitorId: number, ratingDto: RatingDto) {
-    const visit = await this.visitRepository.findOne({ where: { id: visitorId } });
+    const visit = await this.visitRepository.findOne({ where: { id: ratingDto.visit } });
     if (!visit) throw new NotFoundException(`Visit with ID ${visitorId} not found`);
     const visitor = await this.visitRepository.findOne({ where: { id: visitorId } });
     if (!visitor) throw new NotFoundException(`Visitor with ID ${visitorId} not found`);
     const property = await this.propertyRepository.findOne({ where: { id: ratingDto.property } });
     if (!property) throw new NotFoundException(`Property with ID ${ratingDto.property} not found`);
-    const rating = this.ratingRepository.create({ visitor: visitor, rating_score: ratingDto.rating_score, review: ratingDto.review, property: property });
+    const rating = this.ratingRepository.create({ visitor: visitor, rating_score: ratingDto.rating_score, review: ratingDto.review, property: property, visit: visit });
     return this.ratingRepository.save(rating);
   }
 
@@ -97,5 +97,16 @@ export class VisitService {
         console.log('Email sent: ' + info.response);
       }
     });
+  }
+
+  async getRecommendations(visitorId: number) {
+    const visitor = await this.visitorRepository.findOne({
+      where: { id: visitorId },
+      relations: ['visits', 'ratings'],
+    });
+    if (!visitor.ratings.length) {
+      return { message: "You haven't rated any tour yet. so, you can't get recommendations", data: [] };
+    }
+    console.log(visitor);
   }
 }

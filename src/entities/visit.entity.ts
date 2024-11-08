@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { VisitorEntity as Visitor } from './visitor.entity';
 import { PropertyEntity as Property } from './property.entity';
+import { RatingEntity } from './rating.entity';
 
 @Entity('visits')
 export class VisitEntity {
@@ -14,6 +15,10 @@ export class VisitEntity {
     @ManyToOne(() => Property, property => property.visits)
     @JoinColumn({ name: 'property_id' })
     property: Property;
+
+    @OneToOne(() => RatingEntity, rating => rating.visit)
+    rate: RatingEntity;
+
 
     @Column()
     startDate: Date;

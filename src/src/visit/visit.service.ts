@@ -108,5 +108,7 @@ export class VisitService {
       return { message: "You haven't rated any tour yet. so, you can't get recommendations", data: [] };
     }
     console.log(visitor);
+    const visitedPropertyIds = visitor.visits.map(visit => visit.property.id);
+    // console.log(visitedPropertyIds);
   }
 }

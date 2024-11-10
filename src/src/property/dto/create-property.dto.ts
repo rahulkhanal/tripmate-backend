@@ -23,7 +23,7 @@ export class CreatePropertyDto {
 
     @IsString()
     @ApiProperty()
-    location: string;
+    location: string;  
 
     @IsNumber()
     @ApiProperty()

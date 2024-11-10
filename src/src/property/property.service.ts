@@ -25,15 +25,21 @@ export class PropertyService {
     return this.featureRepository.save(features);
   }
 
-  async createProperty(createPropertyDto: CreatePropertyDto) {
-    const { features, ...propertyData } = createPropertyDto;
-
-    // Create and save the Property
-    const property = this.propertyRepository.create(propertyData);
+  async createProperty(createPropertyDto) {
+    const { features, imgDocUrl, imgUrl, ...propertyData } = createPropertyDto;
+    const arrayData = JSON.parse(features);
+    const property = this.propertyRepository.create({
+      name: propertyData.name,
+      category: propertyData.category,
+      location: propertyData.location,
+      description: propertyData.description,
+      price: propertyData.price,
+      imgUrl:  String(imgUrl),
+      imgDocUrl: String(imgDocUrl),
+    });
     await this.propertyRepository.save(property);
 
-    // Create PropertyFeature relations
-    for (const featureData of features) {
+    for (const featureData of arrayData) {
       const feature = await this.featureRepository.findOne({ where: { id: featureData.featureId } });
       if (!feature) throw new BadRequestException('Feature not found');
       const propertyFeature = this.propertyFeatureRepository.create({

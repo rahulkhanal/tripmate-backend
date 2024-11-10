@@ -10,6 +10,9 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './middleware/roles.guard';
 import { JwtService } from '@nestjs/jwt';
 import { AtStrategy } from './middleware/at.strategy';
+import { MulterModule } from '@nestjs/platform-express';
+import { join } from 'path';
+import { ServeStaticModule } from '@nestjs/serve-static';
 
 
 @Module({
@@ -21,6 +24,9 @@ import { AtStrategy } from './middleware/at.strategy';
     AuthModule,
     PropertyModule,
     VisitModule,
+    MulterModule.register({
+      dest: './upload',
+    })
   ],
   controllers: [AppController],
   providers: [],

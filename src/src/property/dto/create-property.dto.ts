@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsString, IsBoolean, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import { IsString, IsBoolean, IsArray, ValidateNested, IsNumber, IsOptional } from 'class-validator';
 
 class FeatureStatusDto {
     @ApiProperty({ example: 1, description: 'The ID of the feature' })
@@ -25,16 +25,21 @@ export class CreatePropertyDto {
     @ApiProperty()
     location: string;
 
+    @IsNumber()
+    @ApiProperty()
+    price: number; 
+
     @IsString()
     @ApiProperty({ description: 'Description of the property' })
     description: string;
 
-    // @IsArray()
-    // @ApiProperty()
-    // features: { featureId: number; status: boolean }[];
+    @ApiProperty({ type: 'string', format: 'binary' })
+    imgUrl: File;
+
+    @ApiProperty({ type: 'string', format: 'binary' })
+    imgDocUrl: File;
 
     @ApiProperty({
-        type: [FeatureStatusDto],
         description: 'An array of feature objects, each containing featureId and status',
         example: [
             { featureId: 1, status: true },
@@ -46,12 +51,13 @@ export class CreatePropertyDto {
             { featureId: 7, status: true },
             { featureId: 8, status: false },
             { featureId: 9, status: true },
-            { featureId: 10, status: false }, 
+            { featureId: 10, status: false },
         ],
     })
+
     @IsArray()
     @ValidateNested({ each: true })
+    @ApiProperty({ type: 'array' })
     @Type(() => FeatureStatusDto)
     features: FeatureStatusDto[];
 }
-

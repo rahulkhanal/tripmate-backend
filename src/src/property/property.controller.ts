@@ -1,13 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards, UseInterceptors, UploadedFile, UploadedFiles, BadRequestException } from '@nestjs/common';
 import { PropertyService } from './property.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdateFeatureStatusDto, UpdatePropertyDto } from './dto/update-property.dto';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { CreateFeaturesDto } from './dto/feature.dto';
 import { FeatureEntity } from 'src/entities/feature.entity';
 import { Roles } from 'src/middleware/roles.decorator';
 import { RolesGuard } from 'src/middleware/roles.guard';
 import { AtGuard } from 'src/middleware/at.guard';
+import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import { extname } from 'path';
+
+const storage = diskStorage({
+  destination: './uploads', 
+  filename: (req, file, callback) => {
+    const uniqueSuffix = uuidv4();
+    callback(null, `${uniqueSuffix}${extname(file.originalname)}`);
+  },
+});
 
 @Controller('property')
 export class PropertyController {
@@ -15,8 +27,37 @@ export class PropertyController {
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new property with features' })
-  async registerProperty(@Body() createPropertyDto: CreatePropertyDto) {
-    return this.propertyService.createProperty(createPropertyDto);
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'imgUrl', maxCount: 1 },
+        { name: 'imgDocUrl', maxCount: 1 },
+      ],
+      {
+        storage,
+        fileFilter: (req, file, callback) => {
+          if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+            return callback(new BadRequestException('Only image files are allowed!'), false);
+          }
+          callback(null, true);
+        },
+        limits: {
+          fileSize: 5 * 1024 * 1024, // 5MB limit
+        },
+      },
+    ),
+  )
+  @ApiBody({ description: 'Property registration data', type: CreatePropertyDto })
+  async registerProperty(
+    @Body() createPropertyDto,
+    @UploadedFiles() files: { imgUrl?: Express.Multer.File[], imgDocUrl?: Express.Multer.File[] }
+  ) {
+      if (!files.imgUrl || !files.imgDocUrl) {
+        throw new BadRequestException('Please upload both images');
+      }
+      const propertyData = { ...createPropertyDto, imgUrl: files.imgUrl[0].path, imgDocUrl: files.imgDocUrl[0].path };
+      return this.propertyService.createProperty(propertyData);
   }
 
   @Roles('super_admin')

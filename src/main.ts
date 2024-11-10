@@ -3,9 +3,14 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalExceptionFilter } from './errors/globalexception';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // cors
+  app.enableCors({origin: '*'});
 
   // Swagger configuration
   const config = new DocumentBuilder()
@@ -34,6 +39,9 @@ async function bootstrap() {
     }),
   );
 
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/', // This will be the URL prefix
+  });
   await app.listen(3000);
 }
 bootstrap().then(() => {

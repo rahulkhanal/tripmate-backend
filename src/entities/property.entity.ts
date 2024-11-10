@@ -20,12 +20,21 @@ export class PropertyEntity {
 
     @Column('text')
     description: string;
- 
-    @Column({ default: false })
+
+    @Column({ default: 0 })
+    price: number;
+
+    @Column({ type: 'text' })
+    imgUrl: string;
+
+    @Column({ type: 'text' })
+    imgDocUrl: string;
+
+    @Column({ default: false }) 
     verified: boolean;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
+    createdAt: Date; 
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
     updatedAt: Date;

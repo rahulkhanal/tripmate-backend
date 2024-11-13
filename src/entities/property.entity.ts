@@ -13,6 +13,9 @@ export class PropertyEntity {
     name: string;
 
     @Column()
+    email: string;
+
+    @Column()
     category: string;
 
     @Column()
@@ -30,11 +33,11 @@ export class PropertyEntity {
     @Column({ type: 'text' })
     imgDocUrl: string;
 
-    @Column({ default: false }) 
+    @Column({ default: false })
     verified: boolean;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date; 
+    createdAt: Date;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
     updatedAt: Date;
@@ -47,4 +50,7 @@ export class PropertyEntity {
 
     @OneToMany(() => PropertyFeature, propertyFeature => propertyFeature.property, { onDelete: 'CASCADE' })
     propertyFeatures: PropertyFeature[];
+
+    @Column({ type: 'text', nullable: true })
+    password: string;
 }

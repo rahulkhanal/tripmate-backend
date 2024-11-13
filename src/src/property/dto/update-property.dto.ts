@@ -33,4 +33,9 @@ export class UpdatePropertyDto {
     @IsString()
     @IsOptional()
     description?: string;
+
+    @ApiProperty({ description: 'price of the property' })
+    @IsString()
+    @IsOptional()
+    price?: string;
 }

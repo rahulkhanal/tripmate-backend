@@ -15,7 +15,7 @@ export class PropertyFeatureEntity {
     @JoinColumn({ name: 'feature_id' })
     feature: Feature;
 
-    @Column()
+    @Column({default: false})
     status: boolean;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

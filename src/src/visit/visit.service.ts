@@ -11,6 +11,7 @@ import { BookingDto, updateBookingDto } from './dto/BookingDto';
 import { RatingDto } from './dto/RatingDto';
 import { MailDto } from './dto/MailDto';
 import * as nodemailer from 'nodemailer';
+import { SuperAdmin } from 'src/entities/super_admin.entity';
 
 @Injectable()
 export class VisitService {
@@ -67,7 +68,7 @@ export class VisitService {
   async rateTour(visitorId: number, ratingDto: RatingDto) {
     const visit = await this.visitRepository.findOne({ where: { id: ratingDto.visit } });
     if (!visit) throw new NotFoundException(`Visit with ID ${visitorId} not found`);
-    const visitor = await this.visitRepository.findOne({ where: { id: visitorId } });
+    const visitor = await this.visitorRepository.findOne({ where: { id: visitorId } });
     if (!visitor) throw new NotFoundException(`Visitor with ID ${visitorId} not found`);
     const property = await this.propertyRepository.findOne({ where: { id: ratingDto.property } });
     if (!property) throw new NotFoundException(`Property with ID ${ratingDto.property} not found`);
@@ -104,9 +105,9 @@ export class VisitService {
       where: { id: visitorId },
       relations: ['visits', 'ratings', 'visits.property', 'ratings.property'],
     });
-    if (!visitor.ratings.length) {
-      return { message: "You haven't rated any tour yet. so, you can't get recommendations", data: [] };
-    }
+    // if (!visitor.ratings.length) {
+    //   return { message: "You haven't rated any tour yet. so, you can't get recommendations", data: [] };
+    // }
     const relevantPropertyIds = visitor.visits.map(visit => visit.property.id);
     const visitorFeatures = await this.propertyFeatureRepository.find({
       where: { property: { id: In(relevantPropertyIds) }, status: true },
@@ -147,4 +148,10 @@ export class VisitService {
     return cosineSimilarity;
   }
 
+
+  async getOwnerBookings(ownerId: number) {
+    const visits = await this.visitRepository.find({ where: { property: { id: ownerId } }, relations: ['visitor'] });
+    if (!visits) return [];
+    return visits;
+  }
 }

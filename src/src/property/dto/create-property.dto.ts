@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsString, IsBoolean, IsArray, ValidateNested, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsBoolean, IsArray, ValidateNested, IsNumber, IsOptional, IsEmail } from 'class-validator';
 
 class FeatureStatusDto {
     @ApiProperty({ example: 1, description: 'The ID of the feature' })
@@ -17,13 +17,17 @@ export class CreatePropertyDto {
     @ApiProperty()
     name: string;
 
+    @IsEmail()
+    @ApiProperty()
+    email: string;
+
     @IsString()
     @ApiProperty()
     category: string;
 
     @IsString()
     @ApiProperty()
-    location: string;  
+    location: string;
 
     @IsNumber()
     @ApiProperty()

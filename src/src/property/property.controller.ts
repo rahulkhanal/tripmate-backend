@@ -95,11 +95,12 @@ export class PropertyController {
   @ApiBody({ type: UpdatePropertyDto })
   @ApiBearerAuth('access_token')
   @UseGuards(AtGuard, RolesGuard)
-  @Roles('super_admin')
+  @Roles('super_admin','owner')
   async updateProperty(
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePropertyDto: UpdatePropertyDto,
   ) {
+    console.log(updatePropertyDto);
     return this.propertyService.updateProperty(id, updatePropertyDto);
   }
 
@@ -107,7 +108,7 @@ export class PropertyController {
   @ApiOperation({ summary: 'Update the status of a feature for a property' })
   @ApiParam({ name: 'id', description: 'The ID of the property to update' })
   @ApiBody({ type: UpdateFeatureStatusDto })
-  @Roles('super_admin')
+  @Roles('super_admin','owner')
   @UseGuards(AtGuard, RolesGuard)
   @ApiBearerAuth('access_token')
   async updateFeatureStatus(

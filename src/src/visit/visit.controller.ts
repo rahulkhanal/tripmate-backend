@@ -46,13 +46,21 @@ export class VisitController {
   }
 
   @Get('get-all-bookings')
-  @Roles('super_admin')
+  @Roles('super_admin', 'owner')
   @UseGuards(AtGuard, RolesGuard)
   @ApiBearerAuth('access_token')
   @ApiOperation({ summary: 'Get all bookings' })
   @ApiQuery({ name: 'status', required: false, type: String, enum: bookingStatus })
-  async getAllBookings(@Query('status') status: bookingStatus,
+  @ApiQuery({ name: 'userType', required: false, type: String })
+  async getAllBookings(
+    @Query('status') status: bookingStatus,
+    @Query('userType') userType,
+    @Req() req,
   ) {
+    if (userType === 'owner') {
+      const {user} = req;
+      return this.visitService.getOwnerBookings(user.id);
+    }
     return this.visitService.getAllBookings(status);
   }
 
@@ -79,6 +87,7 @@ export class VisitController {
     @Body() ratingDto: RatingDto,
   ) {
     const { user } = req;
+    console.log(user);
     return this.visitService.rateTour(user.id, ratingDto);
   }
 

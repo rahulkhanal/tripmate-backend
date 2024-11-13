@@ -14,8 +14,8 @@ export class AppController {
       <title>Greeting</title>
     </head>
     <body>
-      <h1>Namaste Saira! 😘</h1>
-      <p>This is a API for our project. To view the swagger documentation, click the button below.</p>
+      <h1>Namaste Everyone!</h1>
+      <p>To view the swagger documentation, click the button below.</p>
       <button onclick="window.location.href='http://localhost:3000/api'">View API Documentation</button>
     </body>
     </html>

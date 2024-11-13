@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { FeatureEntity as Feature } from 'src/entities/feature.entity';
 import { PropertyFeatureEntity as PropertyFeature } from 'src/entities/property_feature.entity';
 import { CreateFeaturesDto } from './dto/feature.dto';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class PropertyService {
@@ -26,6 +27,8 @@ export class PropertyService {
   }
 
   async createProperty(createPropertyDto) {
+    // generate password
+    const password = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const { features, imgDocUrl, imgUrl, ...propertyData } = createPropertyDto;
     const arrayData = JSON.parse(features);
     const property = this.propertyRepository.create({
@@ -34,8 +37,10 @@ export class PropertyService {
       location: propertyData.location,
       description: propertyData.description,
       price: propertyData.price,
-      imgUrl:  String(imgUrl),
+      imgUrl: String(imgUrl),
       imgDocUrl: String(imgDocUrl),
+      password: password,
+      email: propertyData.email
     });
     await this.propertyRepository.save(property);
 
@@ -49,6 +54,29 @@ export class PropertyService {
       });
       this.propertyFeatureRepository.save(propertyFeature);
     }
+    // send mail to propery owner 
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.MAIL_ID,
+        pass: process.env.MAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.MAIL_ID,
+      to: property.email,
+      subject: 'Account Created Successfully',
+      text: `Your account has been created successfully. Please login to view your property Your username is ${property.email} and password is ${password}`,
+    };
+    await transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+
     return property;
   }
 

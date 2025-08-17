@@ -135,10 +135,155 @@ export class VisitService {
       delete item.property.propertyFeatures;
       return item;
     });
-    return { message: 'Recommendations', data: sortedItem };
-
+    return { message: 'Recommendations', data: sortedItem }
 
   }
+
+  async getUserBasedRecommendations(userId: number) {
+    const K: number = 10;
+    // --- Step 1: Fetch and Prepare Interaction Profile for the Target User (userId) ---
+    const targetUser = await this.visitorRepository.findOne({
+      where: { id: userId },
+      relations: ['visits', 'visits.property', 'ratings', 'ratings.property'],
+    });
+
+    const targetUserInteractions: { [propertyId: number]: number } = {};
+    const targetUserAlreadyInteractedPropertyIds = new Set<number>();
+
+    targetUser.visits.forEach(v => {
+      if (v.property) {
+        targetUserInteractions[v.property.id] = 1;
+        targetUserAlreadyInteractedPropertyIds.add(v.property.id);
+      }
+    });
+    targetUser.ratings.forEach(r => {
+      if (r.property) {
+        targetUserInteractions[r.property.id] = r.rating_score;
+        targetUserAlreadyInteractedPropertyIds.add(r.property.id);
+      }
+    });
+
+
+    // --- Step 2: Fetch and Prepare Interaction Profiles for ALL Other Users (potential neighbors) ---
+    const allOtherVisitors = await this.visitorRepository.find({
+      where: {
+        id: In([ // Get all visitor IDs first, then filter out the target user
+          ...(await this.visitorRepository.find({ select: ['id'] })).map(v => v.id)
+        ].filter(id => id !== userId))
+      },
+      relations: ['visits', 'visits.property', 'ratings', 'ratings.property'],
+    });
+
+    const potentialNeighborsProfiles: { visitor: VisitorEntity; interactions: { [propertyId: number]: number } }[] = [];
+
+    for (const otherVisitor of allOtherVisitors) {
+      const interactions: { [propertyId: number]: number } = {};
+      otherVisitor.visits.forEach(v => {
+        if (v.property) interactions[v.property.id] = 1;
+      });
+      otherVisitor.ratings.forEach(r => {
+        if (r.property) interactions[r.property.id] = r.rating_score;
+      });
+      // Only add users with some interactions to be a potential neighbor for similarity calculation
+      if (Object.keys(interactions).length > 0) {
+        potentialNeighborsProfiles.push({ visitor: otherVisitor, interactions });
+      }
+    }
+
+    // --- Step 3: Calculate Similarities between Target User and ALL Other Users ---
+    const userSimilarities: { visitor: VisitorEntity; score: number }[] = [];
+    for (const neighborProfile of potentialNeighborsProfiles) {
+      // Use Pearson Correlation to find similarity between target user and this neighbor
+      const similarity = this.calculatePearsonCorrelation(targetUserInteractions, neighborProfile.interactions);
+      if (similarity > 0) { // Only consider positively correlated neighbors
+        userSimilarities.push({ visitor: neighborProfile.visitor, score: similarity });
+      }
+    }
+
+    // --- Step 4: Select the K-Nearest Neighbors ---
+    // Sort by similarity score in descending order and take the top K
+    const nearestNeighbors = userSimilarities
+      .sort((a, b) => b.score - a.score)
+      .slice(0, K);
+
+    if (nearestNeighbors.length === 0) {
+      return { message: "No similar users found to generate recommendations.", data: [] };
+    }
+
+    const recommendedPropertiesScores: { [propertyId: number]: { scoreSum: number, similaritySum: number } } = {};
+
+    for (const neighbor of nearestNeighbors) {
+      const neighborInteractions = neighbor.visitor.ratings.length > 0
+        ? neighbor.visitor.ratings.reduce((acc, r) => { // Prioritize ratings
+          if (r.property) acc[r.property.id] = r.rating_score;
+          return acc;
+        }, {})
+        : neighbor.visitor.visits.reduce((acc, v) => { // Fallback to visits if no ratings
+          if (v.property) acc[v.property.id] = 1;
+          return acc;
+        }, {});
+
+      for (const propertyIdStr in neighborInteractions) {
+        const propertyId = parseInt(propertyIdStr);
+        // --- Step 6: Filter out Properties Already Known by Target User ---
+        // Only consider properties the target user has NOT interacted with yet
+        if (!targetUserAlreadyInteractedPropertyIds.has(propertyId)) {
+          const interactionValue = neighborInteractions[propertyId];
+
+          // Initialize score if this property is encountered first time
+          if (!recommendedPropertiesScores[propertyId]) {
+            recommendedPropertiesScores[propertyId] = { scoreSum: 0, similaritySum: 0 };
+          }
+          // Aggregate score: similarity * neighbor's interaction value (e.g., rating)
+          recommendedPropertiesScores[propertyId].scoreSum += neighbor.score * interactionValue;
+          // Also sum similarities for potential averaging (e.g., weighted average prediction)
+          recommendedPropertiesScores[propertyId].similaritySum += neighbor.score;
+        }
+      }
+    }
+
+    // Convert aggregated scores to final recommendations
+    const finalRecommendationsList: { propertyId: number; predictedScore: number }[] = [];
+    for (const propertyId in recommendedPropertiesScores) {
+      const scores = recommendedPropertiesScores[propertyId];
+      // Calculate predicted score (e.g., weighted average of neighbor ratings)
+      // If similaritySum is 0, it means all neighbors had 0 similarity to the target user, so predicted score is 0
+      const predictedScore = scores.similaritySum > 0 ? scores.scoreSum / scores.similaritySum : 0;
+      finalRecommendationsList.push({ propertyId: parseInt(propertyId), predictedScore });
+    }
+
+    // --- Step 7: Rank and Return Final Recommendations ---
+    // Filter out properties with a predicted score of 0 (no meaningful recommendation)
+    // Sort by predicted score in descending order
+    // Limit to top 5 recommendations (you can make this a parameter too)
+    const sortedRecommendations = finalRecommendationsList
+      .filter(rec => rec.predictedScore > 0)
+      .sort((a, b) => b.predictedScore - a.predictedScore)
+      .slice(0, 5); // Example: return top 5 recommendations
+
+    // Fetch full PropertyEntity details for the recommended IDs
+    const recommendedPropertyIds = sortedRecommendations.map(rec => rec.propertyId);
+    let recommendedPropertiesDetails: PropertyEntity[] = [];
+    if (recommendedPropertyIds.length > 0) {
+      recommendedPropertiesDetails = await this.propertyRepository.find({
+        where: { id: In(recommendedPropertyIds) },
+      });
+    }
+
+    // Map back predicted scores to the full property objects
+    const result = sortedRecommendations.map(rec => ({
+      property: recommendedPropertiesDetails.find(p => p.id === rec.propertyId),
+      predictedScore: rec.predictedScore
+    }));
+
+    // Handle case where no recommendations could be generated
+    if (result.length === 0) {
+      return { message: "No relevant recommendations could be generated based on similar users.", data: [] };
+    }
+
+    return { message: 'UBCF Recommendations', data: result };
+  }
+
   private calculateCosineSimilarity(visitorFeatures: Set<number>, propertyFeatures: Set<number>): number {
     // console.log('visitorFeatures', visitorFeatures);
     // console.log(  'propertyFeatures', propertyFeatures);
@@ -146,6 +291,54 @@ export class VisitService {
     // console.log(intersection.size);
     const cosineSimilarity = intersection.size / Math.sqrt(visitorFeatures.size * propertyFeatures.size);
     return cosineSimilarity;
+  }
+
+  private calculatePearsonCorrelation(
+    vec1: { [propertyId: number]: number },
+    vec2: { [propertyId: number]: number }
+  ): number {
+    const commonPropertyIds = Array.from(
+      new Set(Object.keys(vec1).filter(id => id in vec2).map(Number))
+    );
+
+    if (commonPropertyIds.length === 0) {
+      return 0; // No common items, correlation cannot be calculated
+    }
+
+    const x = commonPropertyIds.map(id => vec1[id]);
+    const y = commonPropertyIds.map(id => vec2[id]);
+
+    const n = commonPropertyIds.length;
+
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const meanX = sumX / n;
+    const meanY = sumY / n;
+
+    let numerator = 0;
+    let denominatorX = 0;
+    let denominatorY = 0;
+
+    for (let i = 0; i < n; i++) {
+      const diffX = x[i] - meanX;
+      const diffY = y[i] - meanY;
+
+      numerator += diffX * diffY;
+      denominatorX += diffX * diffX;
+      denominatorY += diffY * diffY;
+    }
+
+    const denominator = Math.sqrt(denominatorX) * Math.sqrt(denominatorY);
+
+    if (denominator === 0) {
+      // This occurs if one or both users have no variance in their common ratings
+      // (e.g., they both rated all common items with the exact same score).
+      // In this specific case, they are perfectly correlated for those items.
+      // However, for practical recommendations, a 0 is safer than NaN for no variance.
+      return 0;
+    }
+
+    return numerator / denominator;
   }
 
 

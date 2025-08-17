@@ -26,7 +26,7 @@ export class AuthController {
       throw new BadRequestException('Invalid userType');
     }
   }
-
+ 
   @Post('login')
   @ApiOperation({ summary: 'Login a user', description: 'Login a user' })
   @ApiQuery({ name: 'userType', enum: ['superAdmin', 'visitor', 'owner'], required: true })

@@ -26,4 +26,4 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
             refreshToken,
         };
     }
-} 
+}

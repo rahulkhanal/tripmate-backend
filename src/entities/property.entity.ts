@@ -1,7 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { VisitEntity as Visit } from './visit.entity';
 import { RatingEntity as Rating } from './rating.entity';
-import { FeatureEntity } from './feature.entity';
 import { PropertyFeatureEntity as PropertyFeature } from './property_feature.entity';
 
 @Entity('properties')

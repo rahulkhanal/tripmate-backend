@@ -60,6 +60,7 @@ export class PropertyController {
       return this.propertyService.createProperty(propertyData);
   }
 
+  @Post('features')
   @Roles('super_admin')
   @UseGuards(AtGuard, RolesGuard)
   @ApiBearerAuth('access_token')

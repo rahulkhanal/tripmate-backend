@@ -13,7 +13,7 @@ import { MailDto } from './dto/MailDto';
 enum bookingStatus {
   booked = 'booked',
   visited = 'visited',
-  cancelled = 'cancelled',
+  cancelled = 'cancelled', 
 }
 
 @Controller('visit')
@@ -58,7 +58,7 @@ export class VisitController {
     @Req() req,
   ) {
     if (userType === 'owner') {
-      const {user} = req;
+      const { user } = req;
       return this.visitService.getOwnerBookings(user.id);
     }
     return this.visitService.getAllBookings(status);
@@ -108,5 +108,16 @@ export class VisitController {
     const { user } = req;
     const visitorId = user.id;
     return await this.visitService.getRecommendations(visitorId);
+  }
+
+  @Get('calculate-knn')
+  @Roles('visitor')
+  @UseGuards(AtGuard, RolesGuard)
+  @ApiBearerAuth('access_token')
+  async calculateKNN(@Req() req) {
+    const { user } = req;
+    const visitorId = user.id;
+    const recommendations = await this.visitService.getUserBasedRecommendations(visitorId);
+    return recommendations;
   }
 }

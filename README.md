@@ -1,5 +1,5 @@
 # Tripmate is travel planner app similar to Tripadvisor
-# this project is my 4th semester project which can be used for anyone who wants to learn something new
+# this project is my 4th semester college project which can be used by anyone who wants to learn something new
 
 ## Tech Stack
 
